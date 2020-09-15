@@ -14927,6 +14927,11 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 7003367543400119210, guid: 6fc9efedd203ad74c851e1d6bf90f307,
+        type: 3}
+      propertyPath: m_audioClip
+      value: 
+      objectReference: {fileID: 8300000, guid: 47f45ef7b5767674393cc401fc325705, type: 3}
     - target: {fileID: 8910716063307780434, guid: 6fc9efedd203ad74c851e1d6bf90f307,
         type: 3}
       propertyPath: m_LocalPosition.x
