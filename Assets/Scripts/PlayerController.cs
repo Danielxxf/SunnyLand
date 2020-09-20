@@ -17,7 +17,7 @@ public class PlayerController : MonoBehaviour
 
     public LayerMask ground;    //地面
     public Text cherryNum;
-    public AudioSource jumpAudio,hurtAudio,cherryAudio,deathAudio;
+    //public AudioSource jumpAudio,hurtAudio,cherryAudio,deathAudio;
     public Transform top,buttom;
 
     public float speed;
@@ -74,31 +74,6 @@ public class PlayerController : MonoBehaviour
         Crouch();
     }
 
-    void Jump()
-    {
-        if (isGround)
-        {
-            extraJump = 2;
-        }
-        if (Input.GetButtonDown("Jump") && extraJump > 0)
-        {
-            jumpAudio.Play(); //播放跳跃音效
-            extraJump--;
-            rigidBody.velocity = new Vector2(rigidBody.velocity.x, jumpForce * Time.fixedDeltaTime); //施加向上跳的速度
-            anima.SetBool("falling", false);
-            anima.SetBool("jumping", true); //动画切换
-            Debug.Log("正常跳！");
-            Debug.Log(extraJump);
-        }
-        //if (Input.GetButtonDown("Jump") && extraJump == 0 && isGround)
-        //{
-        //    jumpAudio.Play(); //播放跳跃音效
-        //    rigidBody.velocity = new Vector2(rigidBody.velocity.x, jumpForce * Time.fixedDeltaTime); //施加向上跳的速度
-        //    anima.SetBool("falling", false);
-        //    anima.SetBool("jumping", true); //动画切换
-        //    Debug.Log("莫名其妙的跳！");
-        //}
-    }
     void SwitchAnim()//动画控制
     {
         if (rigidBody.velocity.y < 0.1 && !coll.IsTouchingLayers(ground))
@@ -119,6 +94,32 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    void Jump()
+    {
+        if (isGround)
+        {
+            extraJump = 2;
+        }
+        if (Input.GetButtonDown("Jump") && extraJump > 0)
+        {
+            SoundMananger.instance.JumpAudio(); //播放跳跃音效
+            extraJump--;
+            rigidBody.velocity = new Vector2(rigidBody.velocity.x, jumpForce * Time.fixedDeltaTime); //施加向上跳的速度
+            anima.SetBool("falling", false);
+            anima.SetBool("jumping", true); //动画切换
+            Debug.Log("正常跳！");
+            Debug.Log(extraJump);
+        }
+        //if (Input.GetButtonDown("Jump") && extraJump == 0 && isGround)
+        //{
+        //    jumpAudio.Play(); //播放跳跃音效
+        //    rigidBody.velocity = new Vector2(rigidBody.velocity.x, jumpForce * Time.fixedDeltaTime); //施加向上跳的速度
+        //    anima.SetBool("falling", false);
+        //    anima.SetBool("jumping", true); //动画切换
+        //    Debug.Log("莫名其妙的跳！");
+        //}
+    }
+
     void Crouch()
     {
         if (Input.GetButton("Crouch")&&coll.IsTouchingLayers(ground))
@@ -136,6 +137,11 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    public void CherryCount()
+    {
+        cherryNum.text = (++cherryCount).ToString();
+    }
+
     void ReStart()
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
@@ -146,16 +152,16 @@ public class PlayerController : MonoBehaviour
         if(collision.tag == "Collections")
         {
             collision.GetComponent<Animator>().Play("Collected");
-            cherryAudio.Play();
+            SoundMananger.instance.CherryAudio();
         }
         else if(collision.tag == "DeadLine")
         {
             GetComponent<AudioSource>().enabled = false;
-            rigidBody.isKinematic = false;
-            deathAudio.Play();
-            Invoke("ReStart", 2f);
+            SoundMananger.instance.DeathAudio();
+            Invoke("ReStart", 2f); //两秒钟后执行名为ReStart的函数；
         }
     }
+
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if(collision.gameObject.tag == "Enemy")
@@ -172,22 +178,18 @@ public class PlayerController : MonoBehaviour
             else if (transform.position.x < collision.gameObject.transform.position.x)
             {
                 rigidBody.velocity = new Vector2(-3, rigidBody.velocity.y);
-                hurtAudio.Play();
+                SoundMananger.instance.HurtAudio();
                 anima.SetBool("hurt", true);
                 isHurt = true;
             }
             else if (transform.position.x > collision.gameObject.transform.position.x)
             {
                 rigidBody.velocity = new Vector2(3, rigidBody.velocity.y);
-                hurtAudio.Play();
+                SoundMananger.instance.HurtAudio();
                 anima.SetBool("hurt", true);
                 isHurt = true;
             }
         }
     }
 
-    public void CherryCount()
-    {
-        cherryNum.text = (++cherryCount).ToString();
-    }
 }
