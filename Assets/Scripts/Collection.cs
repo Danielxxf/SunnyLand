@@ -21,6 +21,7 @@ public class Collection : MonoBehaviour
     void CherryAdd()
     {
         FindObjectOfType<PlayerController>().CherryCount();
+        SoundMananger.instance.CherryAudio();
     }
 
     void Death()

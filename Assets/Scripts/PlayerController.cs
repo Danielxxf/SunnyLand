@@ -3,20 +3,21 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using System.Security.Cryptography;
+using TMPro;
 
 public class PlayerController : MonoBehaviour
 {
-    private Rigidbody2D rigidBody;
+    private Rigidbody2D rigidbody;
     private Animator anima;
-    private bool isHurt;
-    private bool isGround;
-    private int extraJump;
+    [SerializeField]
+    private bool isGround,isHurt,isJump,jumpPressed;
+    private int jumpCount;
 
     public Collider2D coll;
     public Collider2D disColl;
 
     public LayerMask ground;    //地面
-    public Text cherryNum;
+    public TextMeshProUGUI cherryNum;
     //public AudioSource jumpAudio,hurtAudio,cherryAudio,deathAudio;
     public Transform top,buttom;
 
@@ -25,72 +26,51 @@ public class PlayerController : MonoBehaviour
     public int cherryCount;
 
     // Start is called before the first frame update
+    //void Start()
+    //{
+    //    rigidbody = GetComponent<Rigidbody2D>();
+    //    anima = GetComponent<Animator>();
+    //}
+
+    //// Update is called once per frame
+    //void FixedUpdate()  //FixedUpdate保证不同设备相同的效果
+    //{
+    //    if(!isHurt)Movement();
+    //    SwitchAnim();
+    //    isGround = Physics2D.OverlapCircle(buttom.position, 0.2f, ground);
+    //    Jump();
+    //}
+
     void Start()
     {
-        rigidBody = GetComponent<Rigidbody2D>();
+        rigidbody = GetComponent<Rigidbody2D>();
+        coll = GetComponent<Collider2D>();
         anima = GetComponent<Animator>();
     }
-
-    // Update is called once per frame
-    void FixedUpdate()  //FixedUpdate保证不同设备相同的效果
+    void Update()
     {
-        if(!isHurt)Movement();
-        SwitchAnim();
-        isGround = Physics2D.OverlapCircle(buttom.position, 0.2f, ground);
-        Jump();
-    }
-
-    void Movement() //移动
-    {
-        float horizontalMove = Input.GetAxis("Horizontal");
-        float facedirection = Input.GetAxisRaw("Horizontal");
-
-        if(horizontalMove != 0) //左右移动
+        if (Input.GetButtonDown("Jump") && jumpCount > 0)
         {
-            rigidBody.velocity = new Vector2(horizontalMove * speed * Time.fixedDeltaTime, rigidBody.velocity.y);
-            //* Time.deltaTimene能得到一个平滑、不跳帧的运动方式
-            anima.SetFloat("running",Mathf.Abs(facedirection));
+            jumpPressed = true;
         }
-        else
-        {
-            rigidBody.velocity = new Vector2(0, rigidBody.velocity.y);
-        }
-
-        if (facedirection != 0) //随着左右移动改变人物方向
-        {
-            transform.localScale = new Vector3(facedirection, 1, 1);
-        }
-
-        //if (Input.GetButtonDown("Jump")) //按空格跳跃
-        //{
-        //    if(coll.IsTouchingLayers(ground)) //如果人物接触到了地面
-        //    {
-        //        jumpAudio.Play(); //播放跳跃音效
-        //        rb.velocity = new Vector2(rb.velocity.x, jumpForce * Time.fixedDeltaTime); //施加向上跳的速度
-        //        anima.SetBool("falling", false);
-        //        anima.SetBool("jumping", true); //动画切换
-        //    }
-        //}
         Crouch();
     }
 
-    void SwitchAnim()//动画控制
+    private void FixedUpdate()
     {
-        if (rigidBody.velocity.y < 0.1 && !coll.IsTouchingLayers(ground))
+        isGround = Physics2D.OverlapCircle(buttom.position, 0.1f, ground);
+        Jump();
+        if (!isHurt) GroundMovement();
+        SwitchAnima();
+    }
+
+    void GroundMovement()
+    {
+        float horizontalMove = Input.GetAxisRaw("Horizontal");
+        rigidbody.velocity = new Vector2(horizontalMove * speed, rigidbody.velocity.y);
+        if (horizontalMove != 0)
         {
-            anima.SetBool("jumping", false);
-            anima.SetBool("falling", true);
-        }
-        else if (isHurt)
-        {
-            if (Mathf.Abs(rigidBody.velocity.x) < 0.01f)
-            {
-                anima.SetBool("hurt",false);
-                isHurt = false;
-            }
-        }
-        else if (coll.IsTouchingLayers(ground)){    //如果与ground有碰撞
-            anima.SetBool("falling", false);
+            transform.localScale = new Vector3(horizontalMove, 1, 1);
         }
     }
 
@@ -98,37 +78,59 @@ public class PlayerController : MonoBehaviour
     {
         if (isGround)
         {
-            extraJump = 2;
+            jumpCount = 2;
+            isJump = false;
         }
-        if (Input.GetButtonDown("Jump") && extraJump > 0)
+        if (jumpPressed && isGround)
         {
-            SoundMananger.instance.JumpAudio(); //播放跳跃音效
-            extraJump--;
-            rigidBody.velocity = new Vector2(rigidBody.velocity.x, jumpForce * Time.fixedDeltaTime); //施加向上跳的速度
-            anima.SetBool("falling", false);
-            anima.SetBool("jumping", true); //动画切换
-            Debug.Log("正常跳！");
-            Debug.Log(extraJump);
+            isJump = true;
+            rigidbody.velocity = new Vector2(rigidbody.velocity.x, jumpForce);
+            jumpCount--;
+            jumpPressed = false;
         }
-        //if (Input.GetButtonDown("Jump") && extraJump == 0 && isGround)
-        //{
-        //    jumpAudio.Play(); //播放跳跃音效
-        //    rigidBody.velocity = new Vector2(rigidBody.velocity.x, jumpForce * Time.fixedDeltaTime); //施加向上跳的速度
-        //    anima.SetBool("falling", false);
-        //    anima.SetBool("jumping", true); //动画切换
-        //    Debug.Log("莫名其妙的跳！");
-        //}
+        else if (jumpPressed && jumpCount > 0 && !isGround)
+        {
+            isJump = true;
+            rigidbody.velocity = new Vector2(rigidbody.velocity.x, jumpForce);
+            jumpCount--;
+            jumpPressed = false;
+        }
+    }
+
+    void SwitchAnima()
+    {
+        anima.SetFloat("running", Mathf.Abs(rigidbody.velocity.x));
+
+        if (isGround)
+        {
+            anima.SetBool("falling", false);
+        }
+        else if (rigidbody.velocity.y > 0)
+        {
+            anima.SetBool("jumping", true);
+            anima.SetBool("falling", false);
+        }
+        else
+        {
+            anima.SetBool("jumping", false);
+            anima.SetBool("falling", true);
+        }
+        if (isHurt)
+        {
+            if (Mathf.Abs(rigidbody.velocity.x) < 1f)
+            {
+                anima.SetBool("hurt", false);
+                isHurt = false;
+            }
+        }
     }
 
     void Crouch()
     {
-        if (Input.GetButton("Crouch")&&coll.IsTouchingLayers(ground))
+        if (Input.GetButton("Crouch")&&isGround)
         {
-            if (!anima.GetBool("crouch"))
-            {
-                anima.SetBool("crouch", true);
-                disColl.enabled = false;
-            }
+            anima.SetBool("crouch", true);
+            disColl.enabled = false;
         }
         else if (!Physics2D.OverlapCircle(top.position,0.2f,ground))
         {
@@ -152,7 +154,6 @@ public class PlayerController : MonoBehaviour
         if(collision.tag == "Collections")
         {
             collision.GetComponent<Animator>().Play("Collected");
-            SoundMananger.instance.CherryAudio();
         }
         else if(collision.tag == "DeadLine")
         {
@@ -171,20 +172,20 @@ public class PlayerController : MonoBehaviour
             {
                 enemy.JumpOn();
                 Debug.Log("踩到啦！");
-                rigidBody.velocity = new Vector2(rigidBody.velocity.x, jumpForce * Time.deltaTime);
+                rigidbody.velocity = new Vector2(rigidbody.velocity.x, jumpForce);
                 anima.SetBool("falling", false);
                 anima.SetBool("jumping", true);
             }
             else if (transform.position.x < collision.gameObject.transform.position.x)
             {
-                rigidBody.velocity = new Vector2(-3, rigidBody.velocity.y);
+                rigidbody.velocity = new Vector2(-3, rigidbody.velocity.y);
                 SoundMananger.instance.HurtAudio();
                 anima.SetBool("hurt", true);
                 isHurt = true;
             }
             else if (transform.position.x > collision.gameObject.transform.position.x)
             {
-                rigidBody.velocity = new Vector2(3, rigidBody.velocity.y);
+                rigidbody.velocity = new Vector2(3, rigidbody.velocity.y);
                 SoundMananger.instance.HurtAudio();
                 anima.SetBool("hurt", true);
                 isHurt = true;
@@ -192,4 +193,76 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    //void Movement() //移动
+    //{
+    //    float horizontalMove = Input.GetAxis("Horizontal");
+    //    float facedirection = Input.GetAxisRaw("Horizontal");
+
+    //    rigidbody.velocity = new Vector2(horizontalMove * speed * Time.fixedDeltaTime, rigidbody.velocity.y);
+    //    //* Time.deltaTimene能得到一个平滑、不跳帧的运动方式
+    //    anima.SetFloat("running",Mathf.Abs(facedirection));
+
+    //    if (facedirection != 0) //随着左右移动改变人物方向
+    //    {
+    //        transform.localScale = new Vector3(facedirection, 1, 1);
+    //    }
+
+    //    //if (Input.GetButtonDown("Jump")) //按空格跳跃
+    //    //{
+    //    //    if(coll.IsTouchingLayers(ground)) //如果人物接触到了地面
+    //    //    {
+    //    //        jumpAudio.Play(); //播放跳跃音效
+    //    //        rb.velocity = new Vector2(rb.velocity.x, jumpForce * Time.fixedDeltaTime); //施加向上跳的速度
+    //    //        anima.SetBool("falling", false);
+    //    //        anima.SetBool("jumping", true); //动画切换
+    //    //    }
+    //    //}
+    //    Crouch();
+    //}
+
+    //void SwitchAnim()//动画控制
+    //{
+    //    if (rigidbody.velocity.y < 0.1 && !coll.IsTouchingLayers(ground))
+    //    {
+    //        anima.SetBool("jumping", false);
+    //        anima.SetBool("falling", true);
+    //    }
+    //    else if (isHurt)
+    //    {
+    //        if (Mathf.Abs(rigidbody.velocity.x) < 0.01f)
+    //        {
+    //            anima.SetBool("hurt",false);
+    //            isHurt = false;
+    //        }
+    //    }
+    //    else if (coll.IsTouchingLayers(ground)){    //如果与ground有碰撞
+    //        anima.SetBool("falling", false);
+    //    }
+    //}
+
+    //void Jump()
+    //{
+    //    if (isGround)
+    //    {
+    //        extraJump = 2;
+    //    }
+    //    if (Input.GetButtonDown("Jump") && extraJump > 0)
+    //    {
+    //        SoundMananger.instance.JumpAudio(); //播放跳跃音效
+    //        extraJump--;
+    //        rigidbody.velocity = new Vector2(rigidbody.velocity.x, jumpForce * Time.fixedDeltaTime); //施加向上跳的速度
+    //        anima.SetBool("falling", false);
+    //        anima.SetBool("jumping", true); //动画切换
+    //        Debug.Log("正常跳！");
+    //        Debug.Log(extraJump);
+    //    }
+    //    //if (Input.GetButtonDown("Jump") && extraJump == 0 && isGround)
+    //    //{
+    //    //    jumpAudio.Play(); //播放跳跃音效
+    //    //    rigidBody.velocity = new Vector2(rigidBody.velocity.x, jumpForce * Time.fixedDeltaTime); //施加向上跳的速度
+    //    //    anima.SetBool("falling", false);
+    //    //    anima.SetBool("jumping", true); //动画切换
+    //    //    Debug.Log("莫名其妙的跳！");
+    //    //}
+    //}
 }

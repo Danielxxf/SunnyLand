@@ -44,4 +44,14 @@ public class Menu : MonoBehaviour
     {
         audioMixer.SetFloat("MainVolume",value);
     }
+
+    public void BackToMenu()
+    {
+        SceneManager.LoadScene(0);
+    }
+
+    public void GameCapture()
+    {
+        ScreenCapture.CaptureScreenshot(Application.dataPath + "ScreenShot.png",0);
+    }
 }
