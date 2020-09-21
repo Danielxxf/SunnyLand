@@ -1,4 +1,5 @@
 # SunnyLand
+### 概述
 这款游戏的美术设计部分采用的是Unity资源商店中免费的素材。
 #### 在项目中实现了以下主要功能： 
 1.  游戏主角的移动：左右移动，跳跃和下蹲，主角跳到敌人头顶可消灭敌人；
@@ -8,3 +9,12 @@
 1.  Level1
 2.  Level2
 3.  Menu（主菜单）
+### 预览图
+#### Level1
+![Level1_1](图片链接 "optional title")
+![Level1_2](图片链接 "optional title")
+![Level1_3](图片链接 "optional title")
+
+#### Level2
+![Level1_1](图片链接 "optional title")
+![Level1_2](图片链接 "optional title")
