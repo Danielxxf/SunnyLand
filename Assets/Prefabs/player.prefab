@@ -138,7 +138,7 @@ Rigidbody2D:
   m_Material: {fileID: 0}
   m_Interpolate: 0
   m_SleepingMode: 1
-  m_CollisionDetection: 0
+  m_CollisionDetection: 1
   m_Constraints: 4
 --- !u!61 &8910716063307780432
 BoxCollider2D:
@@ -215,7 +215,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isGround: 0
   isHurt: 0
-  isJump: 0
   jumpPressed: 0
   coll: {fileID: 8910716063307780461}
   disColl: {fileID: 8910716063307780432}
@@ -225,9 +224,9 @@ MonoBehaviour:
   cherryNum: {fileID: 0}
   top: {fileID: 2032206993981644989}
   buttom: {fileID: 2667783459906275526}
+  cherryCount: 0
   speed: 4
   jumpForce: 10
-  cherryCount: 0
 --- !u!82 &1785536314142082233
 AudioSource:
   m_ObjectHideFlags: 0

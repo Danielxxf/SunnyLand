@@ -7,39 +7,23 @@ using TMPro;
 
 public class PlayerController : MonoBehaviour
 {
+    private int jumpCount;
+    [SerializeField]
+    private bool isGround,isHurt,jumpPressed;
     private Rigidbody2D rigidbody;
     private Animator anima;
-    [SerializeField]
-    private bool isGround,isHurt,isJump,jumpPressed;
-    private int jumpCount;
 
     public Collider2D coll;
     public Collider2D disColl;
 
     public LayerMask ground;    //地面
     public TextMeshProUGUI cherryNum;
-    //public AudioSource jumpAudio,hurtAudio,cherryAudio,deathAudio;
     public Transform top,buttom;
+    //public AudioSource jumpAudio,hurtAudio,cherryAudio,deathAudio;
 
+    public int cherryCount;
     public float speed;
     public float jumpForce;
-    public int cherryCount;
-
-    // Start is called before the first frame update
-    //void Start()
-    //{
-    //    rigidbody = GetComponent<Rigidbody2D>();
-    //    anima = GetComponent<Animator>();
-    //}
-
-    //// Update is called once per frame
-    //void FixedUpdate()  //FixedUpdate保证不同设备相同的效果
-    //{
-    //    if(!isHurt)Movement();
-    //    SwitchAnim();
-    //    isGround = Physics2D.OverlapCircle(buttom.position, 0.2f, ground);
-    //    Jump();
-    //}
 
     void Start()
     {
@@ -59,8 +43,8 @@ public class PlayerController : MonoBehaviour
     private void FixedUpdate()
     {
         isGround = Physics2D.OverlapCircle(buttom.position, 0.1f, ground);
-        Jump();
         if (!isHurt) GroundMovement();
+        Jump();
         SwitchAnima();
     }
 
@@ -79,21 +63,32 @@ public class PlayerController : MonoBehaviour
         if (isGround)
         {
             jumpCount = 2;
-            isJump = false;
         }
         if (jumpPressed && isGround)
         {
-            isJump = true;
             rigidbody.velocity = new Vector2(rigidbody.velocity.x, jumpForce);
             jumpCount--;
             jumpPressed = false;
         }
         else if (jumpPressed && jumpCount > 0 && !isGround)
         {
-            isJump = true;
             rigidbody.velocity = new Vector2(rigidbody.velocity.x, jumpForce);
             jumpCount--;
             jumpPressed = false;
+        }
+    }
+
+    void Crouch()
+    {
+        if (Input.GetButton("Crouch")&&isGround)
+        {
+            anima.SetBool("crouch", true);
+            disColl.enabled = false;
+        }
+        else if (!Physics2D.OverlapCircle(top.position,0.2f,ground))
+        {
+            anima.SetBool("crouch", false);
+            disColl.enabled = true;
         }
     }
 
@@ -115,38 +110,30 @@ public class PlayerController : MonoBehaviour
             anima.SetBool("jumping", false);
             anima.SetBool("falling", true);
         }
-        if (isHurt)
-        {
-            if (Mathf.Abs(rigidbody.velocity.x) < 1f)
-            {
-                anima.SetBool("hurt", false);
-                isHurt = false;
-            }
-        }
-    }
-
-    void Crouch()
-    {
-        if (Input.GetButton("Crouch")&&isGround)
-        {
-            anima.SetBool("crouch", true);
-            disColl.enabled = false;
-        }
-        else if (!Physics2D.OverlapCircle(top.position,0.2f,ground))
-        {
-            anima.SetBool("crouch", false);
-            disColl.enabled = true;
-        }
-    }
-
-    public void CherryCount()
-    {
-        cherryNum.text = (++cherryCount).ToString();
+        //if (isHurt)
+        //{
+        //    if (Mathf.Abs(rigidbody.velocity.x) < 1f)
+        //    {
+        //        anima.SetBool("hurt", false);
+        //        isHurt = false;
+        //    }
+        //}
     }
 
     void ReStart()
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
+    void recover()
+    {
+        anima.SetBool("hurt", false);
+        isHurt = false;
+    }
+
+    public void CherryCount()
+    {
+        cherryNum.text = (++cherryCount).ToString();
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -163,12 +150,15 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void OnCollisionEnter2D(Collision2D collision)
+    private void OnCollisionEnter2D(Collision2D collision) //检测与敌人碰撞
     {
         if(collision.gameObject.tag == "Enemy")
         {
+            Vector2 playerPosition = transform.position, enemyPosition = collision.gameObject.transform.position;
+
             Enemy enemy = collision.gameObject.GetComponent<Enemy>();
-            if(anima.GetBool("falling"))
+
+            if(playerPosition.y>enemyPosition.y+1)
             {
                 enemy.JumpOn();
                 Debug.Log("踩到啦！");
@@ -176,22 +166,17 @@ public class PlayerController : MonoBehaviour
                 anima.SetBool("falling", false);
                 anima.SetBool("jumping", true);
             }
-            else if (transform.position.x < collision.gameObject.transform.position.x)
+            else
             {
-                rigidbody.velocity = new Vector2(-3, rigidbody.velocity.y);
+                rigidbody.velocity = new Vector2((playerPosition.x-enemyPosition.x)*7, rigidbody.velocity.y);
                 SoundMananger.instance.HurtAudio();
                 anima.SetBool("hurt", true);
                 isHurt = true;
-            }
-            else if (transform.position.x > collision.gameObject.transform.position.x)
-            {
-                rigidbody.velocity = new Vector2(3, rigidbody.velocity.y);
-                SoundMananger.instance.HurtAudio();
-                anima.SetBool("hurt", true);
-                isHurt = true;
+                Invoke("recover", 0.7f);
             }
         }
     }
+
 
     //void Movement() //移动
     //{
